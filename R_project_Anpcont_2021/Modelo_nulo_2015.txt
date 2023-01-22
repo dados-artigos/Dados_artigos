@@ -1,0 +1,27 @@
+Linear mixed model fit by maximum likelihood .
+  t-tests use Satterthwaite's method [lmerModLmerTest
+]
+Formula: N_OBJ ~ 1 + (1 | ID_IES)
+   Data: Dados_2015
+
+      AIC       BIC    logLik  deviance  df.resid 
+ 417411.0  417437.7 -208702.5  417405.0     54810 
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-3.6425 -0.7070 -0.0336  0.6715  4.2980 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ ID_IES   (Intercept)  16.39    4.049  
+ Residual             115.41   10.743  
+Number of obs: 54813, groups:  ID_IES, 817
+
+Fixed effects:
+            Estimate Std. Error       df t value
+(Intercept)  34.1465     0.1569 796.9843   217.6
+            Pr(>|t|)    
+(Intercept)   <2e-16 ***
+---
+Signif. codes:  
+0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1

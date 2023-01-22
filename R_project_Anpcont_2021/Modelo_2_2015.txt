@@ -1,0 +1,83 @@
+Linear mixed model fit by maximum likelihood .
+  t-tests use Satterthwaite's method [lmerModLmerTest
+]
+Formula: 
+NG ~ cat_adm + org_acad + regiao_curso + np_infra + np_me + np_dr +  
+    np_rt + idade_M + renda_IES + (1 | ID_IES)
+   Data: Dados_2015
+
+      AIC       BIC    logLik  deviance  df.resid 
+ 429034.7  429168.4 -214502.4  429004.7     54798 
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-3.5758 -0.6995 -0.0416  0.6584  4.1787 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ ID_IES   (Intercept)  11.93    3.453  
+ Residual             143.50   11.979  
+Number of obs: 54813, groups:  ID_IES, 817
+
+Fixed effects:
+                         Estimate Std. Error
+(Intercept)               35.7148     2.0154
+cat_admPública             3.6404     0.5641
+org_acadUniversidade       1.0136     0.4264
+regiao_cursoNordeste       1.2226     0.5993
+regiao_cursoSudeste        1.5523     0.5695
+regiao_cursoSul            0.4872     0.6200
+regiao_cursoCentro-oeste  -0.3778     0.6581
+np_infra                   1.0420     0.1451
+np_me                      0.5391     0.1771
+np_dr                      0.1053     0.1787
+np_rt                      0.1898     0.1368
+idade_M                   -0.3234     0.0596
+renda_IES                  3.1917     0.2731
+                               df t value Pr(>|t|)
+(Intercept)              788.8273  17.721  < 2e-16
+cat_admPública           658.3913   6.453 2.13e-10
+org_acadUniversidade     615.7529   2.377  0.01776
+regiao_cursoNordeste     784.1156   2.040  0.04168
+regiao_cursoSudeste      817.6073   2.726  0.00655
+regiao_cursoSul          784.4819   0.786  0.43224
+regiao_cursoCentro-oeste 847.1588  -0.574  0.56610
+np_infra                 786.4398   7.182 1.60e-12
+np_me                    775.0799   3.045  0.00241
+np_dr                    726.3501   0.589  0.55589
+np_rt                    787.1039   1.387  0.16586
+idade_M                  790.2206  -5.426 7.68e-08
+renda_IES                812.9648  11.686  < 2e-16
+                            
+(Intercept)              ***
+cat_admPública           ***
+org_acadUniversidade     *  
+regiao_cursoNordeste     *  
+regiao_cursoSudeste      ** 
+regiao_cursoSul             
+regiao_cursoCentro-oeste    
+np_infra                 ***
+np_me                    ** 
+np_dr                       
+np_rt                       
+idade_M                  ***
+renda_IES                ***
+---
+Signif. codes:  
+0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+                               2.5 %     97.5 %
+.sig01                    3.23014588  3.6927910
+.sigma                   11.90814776 12.0510665
+(Intercept)              31.76024150 39.6699455
+cat_admPública            2.53066237  4.7463139
+org_acadUniversidade      0.17750784  1.8524887
+regiao_cursoNordeste      0.04600683  2.3981956
+regiao_cursoSudeste       0.43286873  2.6686646
+regiao_cursoSul          -0.73121648  1.7027631
+regiao_cursoCentro-oeste -1.66809928  0.9150511
+np_infra                  0.75748827  1.3270007
+np_me                     0.19193119  0.8869845
+np_dr                    -0.24567515  0.4558841
+np_rt                    -0.07911377  0.4581360
+idade_M                  -0.44031227 -0.2063798
+renda_IES                 2.65531226  3.7272490

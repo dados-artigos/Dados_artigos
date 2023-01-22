@@ -1,0 +1,890 @@
+---
+title: "Código para análise descritiva e testes de hipóteses"
+author: "Elisabeth Araujo"
+date: "30/08/2021"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+Carregar e, caso não tenha, instalar automaticamente, possíveis pacotes necessários aos comandos.
+```{r}
+pacman::p_load(foreign, haven, lme4, optimx, lmerTest, HLMdiag, Hmisc, backports,
+               esquisse, tidyr, corrplot, plyr, dplyr, ggcorrplot, ggplot2, WriteXLS,
+               car, rstatix, ggpubr, QuantPsyc, psych, scatterplot3d, lattice, RVAideMemoire, rmarkdown)
+```
+Caregar bases de dados
+```{r}
+load("Dados_2012.Rda")
+load("Dados_2015.Rda")
+load("Dados_2018.Rda")
+
+Dados_2012$ID_IES <- as.factor(Dados_2012$ID_IES)
+Dados_2012$ID_aluno <- as.factor(Dados_2012$ID_aluno)
+Dados_2015$ID_IES <- as.factor(Dados_2015$ID_IES)
+Dados_2015$ID_aluno <- as.factor(Dados_2015$ID_aluno)
+Dados_2018$ID_IES <- as.factor(Dados_2018$ID_IES)
+Dados_2018$ID_aluno <- as.factor(Dados_2018$ID_aluno)
+```
+Criacao de variavel com soma notas OBJETIVAS Formacao Geral e Componente Especifico
+```{r}
+Dados_2012$N_OBJ<-Dados_2012$NFG_OBJ*0.6*0.25+Dados_2012$NCE_OBJ*0.85*0.75
+Dados_2012$N_OBJ<-round(Dados_2012$N_OBJ, digits = 1)
+Dados_2012 <- subset(Dados_2012, select=-c(N_OB))
+
+Dados_2015$N_OBJ<-Dados_2015$NFG_OBJ*0.6*0.25+Dados_2015$NCE_OBJ*0.85*0.75
+Dados_2015$N_OBJ<-round(Dados_2015$N_OBJ, digits = 1)
+Dados_2015 <- subset(Dados_2015, select=-c(N_OB))
+
+Dados_2018$N_OBJ<-Dados_2018$NFG_OBJ*0.6*0.25+Dados_2018$NCE_OBJ*0.85*0.75
+Dados_2018$N_OBJ<-round(Dados_2018$N_OBJ, digits = 1)
+Dados_2018 <- subset(Dados_2018, select=-c(N_OB))
+```
+Criacao de variavel com soma notas DISCURSIVAS Formacao Geral e Componente Especifico
+```{r}
+Dados_2012$N_DIS<-Dados_2012$NFG_DIS*0.4*0.25+Dados_2012$NCE_DIS*0.15*0.75
+Dados_2012$N_DIS<-round(Dados_2012$N_DIS, digits = 1)
+
+
+Dados_2015$N_DIS<-Dados_2015$NFG_DIS*0.4*0.25+Dados_2015$NCE_DIS*0.15*0.75
+Dados_2015$N_DIS<-round(Dados_2015$N_DIS, digits = 1)
+
+
+Dados_2018$N_DIS<-Dados_2018$NFG_DIS*0.4*0.25+Dados_2018$NCE_DIS*0.15*0.75
+Dados_2018$N_DIS<-round(Dados_2018$N_DIS, digits = 1)
+
+```
+Juntando bancos de dados 3 anos
+```{r}
+Dados<-join_all(list(data.frame(Dados_2012), data.frame(Dados_2015), data.frame(Dados_2018)),
+                type="full")
+
+Dados$n_ano<-as.factor(Dados$n_ano)
+
+```
+Contagem alunos por IES (remover IES com menos de 2 alunos, caso haja)
+```{r}
+AlunoxIES<-Dados_2012 %>% 
+  group_by(ID_IES) %>% 
+  summarise(Contagem = length(unique(ID_aluno)))
+```
+Gerando uma tabela summarise Nota bruta
+```{r}
+DescNG <- Dados %>% group_by(n_ano) %>%
+  summarise(
+    Mínimo = min(NG),
+    PrimQtl = quantile(NG, probs = 0.25),
+    Média = mean(NG),
+    DP = sd(NG),
+    Mediana = median(NG),
+    TercQtl = quantile(NG, probs = 0.75),
+    Máximo = max(NG))
+DescNG<-as.data.frame(DescNG)
+```
+Gerando uma tabela summarise Nota objetiva
+```{r}
+DescNOBJ <- Dados %>% group_by(n_ano) %>%
+  summarise(
+    Mínimo = min(N_OBJ),
+    PrimQtl = quantile(N_OBJ, probs = 0.25),
+    Média = mean(N_OBJ),
+    DP = sd(N_OBJ),
+    Mediana = median(N_OBJ),
+    TercQtl = quantile(N_OBJ, probs = 0.75),
+    Máximo = max(N_OBJ))
+DescNOBJ<-as.data.frame(DescNOBJ)
+```
+Gerando uma tabela summarise Nota discursiva
+```{r}
+DescNDIS <- Dados %>% group_by(n_ano) %>%
+  summarise(
+    Mínimo = min(N_DIS),
+    PrimQtl = quantile(N_DIS, probs = 0.25),
+    Média = mean(N_DIS),
+    DP = sd(N_DIS),
+    Mediana = median(N_DIS),
+    TercQtl = quantile(N_DIS, probs = 0.75),
+    Máximo = max(N_DIS))
+DescNDIS<-as.data.frame(DescNDIS)
+```
+Boxplot Nota Geral por ano
+```{r}
+NGstats <- ddply(Dados, .(n_ano), summarise, min=min(NG), PQ= quantile(NG, probs = .25),
+                 media=mean(NG), mediana = median(NG), TQ=quantile(NG, probs = .75), max=max(NG))
+
+NGstats$media<-round(NGstats$media, digits = 1)
+  
+ggplot(Dados) +
+  aes(x = n_ano, y = NG, fill = n_ano) +
+  geom_boxplot(coef=3, alpha=.5, show.legend = F) +
+  coord_cartesian(ylim = c(0,100))+
+  stat_boxplot(geom="errorbar", coef = 3)+
+  geom_text(data = NGstats, aes(x = n_ano, y = min, label = min), size = 3, vjust = -.5,
+            hjust=1.5, col="red", family="serif")+
+  geom_text(data = NGstats, aes(x = n_ano, y = PQ, label = PQ), size = 3, vjust = 1.2,
+            hjust=2, col="red", family="serif")+
+  geom_text(data = NGstats, aes(x = n_ano, y = mediana, label = mediana), size = 3, vjust = -.5,
+            hjust=-.2, col="red", family="serif")+
+  geom_text(data = NGstats, aes(x = n_ano, y = TQ, label = TQ), size = 3, vjust = -.3,
+            hjust=-1, col="red", family="serif")+
+  geom_text(data = NGstats, aes(x = n_ano, y = max, label = max), size = 3, vjust = -.5,
+           hjust=.5, col="red", family="serif")+
+  scale_fill_hue() +
+  labs(x = "Ano da prova", y = "Nota", title = "Nota Bruta Geral por ano ENADE",
+       caption = "Fonte: Microdados ENADE 2012, 2015 e 2018") +
+  theme_bw()+
+  theme(text = element_text(family = "serif", size = 10))
+```
+Histogramas notas brutas com linha de média simples
+```{r}
+ggplot(Dados) +
+  aes(x = NG, fill = n_ano) +
+  geom_histogram(bins = 30L) +
+  scale_fill_brewer(palette = "Accent") +
+  scale_y_continuous(breaks = c(0, 1000, 2000, 3000, 4000, 5000, 6000))+
+  scale_x_continuous(breaks = c(0, 20, 40, 60, 80, 100))+
+  geom_vline(data = NGstats, aes(xintercept=media), color="red")+
+  labs(x = "Nota", y = "Frequência", title = "Frequência das notas gerais ENADE",
+       caption = "Fonte: Microdados ENADE 2012, 2015 e 2018") +
+  theme_bw() +
+  theme(legend.position = "none",
+        text = element_text(family = "serif", size = 10)) +
+  facet_wrap(vars(n_ano))
+```
+Modelo Nulo 2012 - apenas N_OBJ
+```{r}
+Modelo_nulo_2012=lmer(N_OBJ~1+(1|ID_IES), REML=FALSE, data=Dados_2012)
+summary(Modelo_nulo_2012) #ver o resultado da estimação
+sink(file = "Modelo_nulo_2012.txt") # Cria o arquivo com output
+summary(Modelo_nulo_2012) #output do modelo nulo, que sera usado pela funcao sink
+confint(Modelo_nulo_2012) #Calcula o intervalo de confianca dos parametros dos modelo.
+sink(file = NULL) #finalizar a funcao
+```
+Modelo Nulo 2015 - apenas N_OBJ
+```{r}
+Modelo_nulo_2015=lmer(N_OBJ~1+(1|ID_IES), REML=FALSE, data=Dados_2015)
+sink(file = "Modelo_nulo_2015.txt")
+summary(Modelo_nulo_2015)
+confint(Modelo_nulo_2015)
+sink(file = NULL)
+```
+Modelo Nulo 2018 - apenas N_OBJ
+```{r}
+Modelo_nulo_2018=lmer(N_OBJ~1+(1|ID_IES), REML=FALSE, data=Dados_2018)
+sink(file = "Modelo_nulo_2018.txt")
+summary(Modelo_nulo_2018)
+confint(Modelo_nulo_2018)
+sink(file = NULL)
+```
+Modelo com variavel MOD 2012 - apenas N_OBJ
+```{r}
+Modelo_MOD_2012=lmer(N_OBJ~MOD+(1|ID_IES), REML=FALSE, data=Dados_2012)
+sink(file = "Modelo_MOD_2012.txt")
+summary(Modelo_MOD_2012)
+confint(Modelo_MOD_2012)
+sink(file = NULL)
+vcov_Modelo_MOD_2012<-round(as.matrix(vcov(Modelo_MOD_2012)), 2)
+write.table(vcov_Modelo_MOD_2012, file = "Modelo_MOD_2012_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com variavel MOD 2015 - apenas N_OBJ
+```{r}
+Modelo_MOD_2015=lmer(N_OBJ~MOD+(1|ID_IES), REML=FALSE, data=Dados_2015)
+sink(file = "Modelo_MOD_2015.txt")
+summary(Modelo_MOD_2015)
+confint(Modelo_MOD_2015)
+sink(file = NULL)
+vcov_Modelo_MOD_2015<-round(as.matrix(vcov(Modelo_MOD_2015)), 2)
+write.table(vcov_Modelo_MOD_2015, file = "Modelo_MOD_2015_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com variavel MOD 2018 - apenas N_OBJ
+```{r}
+Modelo_MOD_2018=lmer(N_OBJ~MOD+(1|ID_IES), REML=FALSE, data=Dados_2018)
+sink(file = "Modelo_MOD_2018.txt")
+summary(Modelo_MOD_2018)
+confint(Modelo_MOD_2018)
+sink(file = NULL)
+vcov_Modelo_MOD_2018<-round(as.matrix(vcov(Modelo_MOD_2018)), 2)
+write.table(vcov_Modelo_MOD_2018, file = "Modelo_MOD_2018_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com variaveis do Nivel 1 (aluno) - 2012 - apenas N_OBJ
+```{r}
+Modelo_1_2012=lmer(N_OBJ~MOD+d_not+c_idade+d_sexf+d_etnia+dedicH+livros+d_ecivil+renda+
+                     d_afirm+d_bolsa+escpub+d_moraso+(1|ID_IES), REML=FALSE, data=Dados_2012)
+sink(file = "Modelo_1_2012.txt")
+summary(Modelo_1_2012)
+confint(Modelo_1_2012)
+sink(file = NULL)
+vcov_Modelo_1_2012<-round(as.matrix(vcov(Modelo_1_2012)), 2)
+write.table(vcov_Modelo_1_2012, file = "Modelo_1_2012_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com variaveis do Nivel 1 (aluno) - 2015 - apenas N_OBJ
+```{r}
+Modelo_1_2015=lmer(N_OBJ~MOD+d_not+c_idade+d_sexf+d_etnia+dedicH+livros+d_ecivil+renda+
+                     d_afirm+d_bolsa+escpub+d_moraso+(1|ID_IES), REML=FALSE, data=Dados_2015)
+sink(file = "Modelo_1_2015.txt")
+summary(Modelo_1_2015)
+confint(Modelo_1_2015)
+sink(file = NULL)
+vcov_Modelo_1_2015<-round(as.matrix(vcov(Modelo_1_2015)), 2)
+write.table(vcov_Modelo_1_2015, file = "Modelo_1_2015_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com variaveis do Nivel 1 (aluno) - 2018 - apenas N_OBJ
+```{r}
+Modelo_1_2018=lmer(N_OBJ~MOD+d_not+c_idade+d_sexf+d_etnia+dedicH+livros+d_ecivil+renda+
+                     d_afirm+d_bolsa+escpub+d_moraso+(1|ID_IES), REML=FALSE, data=Dados_2018)
+
+sink(file = "Modelo_1_2018.txt")
+summary(Modelo_1_2018)
+confint(Modelo_1_2018)
+sink(file = NULL)
+vcov_Modelo_1_2018<-round(as.matrix(vcov(Modelo_1_2018)), 2)
+write.table(vcov_Modelo_1_2018, file = "Modelo_1_2018_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com variaveis do Nivel 1 (aluno) e inclinacao aleatoria - 2012 - apenas N_OBJ
+```{r}
+Modelo_1_Randomslope_2012=lmer(N_OBJ~MOD+d_not+c_idade+d_sexf+d_etnia+dedicH+livros+d_ecivil+renda+
+                                 d_afirm+d_bolsa+escpub+d_moraso+(MOD|ID_IES), REML=FALSE, data=Dados_2012)
+sink(file = "Modelo_1_Randomslope_2012.txt")
+summary(Modelo_1_Randomslope_2012)
+confint(Modelo_1_Randomslope_2012)
+sink(file = NULL)
+vcov_Modelo_1_Randomslope_2012<-round(as.matrix(vcov(Modelo_1_Randomslope_2012)), 2)
+write.table(vcov_Modelo_1_Randomslope_2012, file = "Modelo_1_Randomslope_2012_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com variaveis do Nivel 1 (aluno) e inclinacao aleatoria - 2015 - apenas N_OBJ
+```{r}
+Modelo_1_Randomslope_2015=lmer(N_OBJ~MOD+d_not+c_idade+d_sexf+d_etnia+dedicH+livros+d_ecivil+renda+
+                                 d_afirm+d_bolsa+escpub+d_moraso+(MOD|ID_IES), REML=FALSE, data=Dados_2015)
+sink(file = "Modelo_1_Randomslope_2015.txt")
+summary(Modelo_1_Randomslope_2015)
+confint(Modelo_1_Randomslope_2015)
+sink(file = NULL)
+vcov_Modelo_1_Randomslope_2015<-round(as.matrix(vcov(Modelo_1_Randomslope_2015)), 2)
+write.table(vcov_Modelo_1_Randomslope_2015, file = "Modelo_1_Randomslope_2015_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com variaveis do Nivel 1 (aluno) e inclinacao aleatoria - 2018 - apenas N_OBJ
+```{r}
+Modelo_1_Randomslope_2018=lmer(N_OBJ~MOD+d_not+c_idade+d_sexf+d_etnia+dedicH+livros+d_ecivil+renda+
+                                 d_afirm+d_bolsa+escpub+d_moraso+(MOD|ID_IES), REML=FALSE, data=Dados_2018)
+sink(file = "Modelo_1_Randomslope_2018.txt")
+summary(Modelo_1_Randomslope_2018)
+confint(Modelo_1_Randomslope_2018)
+sink(file = NULL)
+vcov_Modelo_1_Randomslope_2018<-round(as.matrix(vcov(Modelo_1_Randomslope_2018)), 2)
+write.table(vcov_Modelo_1_Randomslope_2018, file = "Modelo_1_Randomslope_2018_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com variaveis do Nivel 2 (IES) - 2012 - apenas N_OBJ
+```{r}
+Modelo_2_2012=lmer(N_OBJ~cat_adm+org_acad+regiao_curso+np_infra+np_me+np_dr+np_rt+idade_M+renda_IES+(1|ID_IES), REML=FALSE, data=Dados_2012)
+sink(file = "Modelo_2_2012.txt")
+summary(Modelo_2_2012)
+confint(Modelo_2_2012)
+sink(file = NULL)
+vcov_Modelo_2_2012<-round(as.matrix(vcov(Modelo_2_2012)), 2)
+write.table(vcov_Modelo_2_2012, file = "Modelo_2_2012_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com variaveis do Nivel 2 (IES) - 2015 - apenas N_OBJ
+```{r}
+Modelo_2_2015=lmer(N_OBJ~cat_adm+org_acad+regiao_curso+np_infra+np_me+np_dr+np_rt+idade_M+renda_IES+(1|ID_IES), REML=FALSE, data=Dados_2015)
+sink(file = "Modelo_2_2015.txt")
+summary(Modelo_2_2015)
+confint(Modelo_2_2015)
+sink(file = NULL)
+vcov_Modelo_2_2015<-round(as.matrix(vcov(Modelo_2_2015)), 2)
+write.table(vcov_Modelo_2_2015, file = "Modelo_2_2015_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com variaveis do Nivel 2 (IES) - 2018 - apenas N_OBJ
+```{r}
+Modelo_2_2018=lmer(N_OBJ~cat_adm+org_acad+regiao_curso+np_infra+np_me+np_dr+np_rt+idade_M+renda_IES+(1|ID_IES), REML=FALSE, data=Dados_2018)
+sink(file = "Modelo_2_2018.txt")
+summary(Modelo_2_2018)
+confint(Modelo_2_2018)
+sink(file = NULL)
+vcov_Modelo_2_2018<-round(as.matrix(vcov(Modelo_2_2018)), 2)
+write.table(vcov_Modelo_2_2018, file = "Modelo_2_2018_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com variaveis do Nivel 1 (aluno) e Nivel 2 (IES) - 2012 - apenas N_OBJ
+```{r}
+Modelo_full_2012=lmer(N_OBJ~MOD+d_not+c_idade+d_sexf+d_etnia+dedicH+livros+d_ecivil+renda+d_afirm+d_bolsa+escpub+d_moraso+cat_adm+org_acad+regiao_curso+np_infra+np_me+np_dr+np_rt+idade_M+renda_IES+
+(1|ID_IES), REML=FALSE, data=Dados_2012)
+sink(file = "Modelo_full_2012.txt")
+summary(Modelo_full_2012)
+confint(Modelo_full_2012)
+sink(file = NULL)
+vcov_Modelo_full_2012<-round(as.matrix(vcov(Modelo_full_2012)), 2)
+write.table(vcov_Modelo_full_2012, file = "Modelo_full_2012_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com variaveis do Nivel 1 (aluno) e Nivel 2 (IES) - 2015 - apenas N_OBJ
+```{r}
+Modelo_full_2015=lmer(N_OBJ~MOD+d_not+c_idade+d_sexf+d_etnia+dedicH+livros+d_ecivil+renda+d_afirm+d_bolsa+escpub+d_moraso+cat_adm+org_acad+regiao_curso+np_infra+np_me+np_dr+np_rt+idade_M+renda_IES+
+(1|ID_IES), REML=FALSE, data=Dados_2015)
+sink(file = "Modelo_full_2015.txt")
+summary(Modelo_full_2015)
+confint(Modelo_full_2015)
+sink(file = NULL)
+vcov_Modelo_full_2015<-round(as.matrix(vcov(Modelo_full_2015)), 2)
+write.table(vcov_Modelo_full_2015, file = "Modelo_full_2015_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com variaveis do Nivel 1 (aluno) e Nivel 2 (IES) - 2018 - apenas N_OBJ
+```{r}
+Modelo_full_2018=lmer(N_OBJ~MOD+d_not+c_idade+d_sexf+d_etnia+dedicH+livros+d_ecivil+renda+d_afirm+d_bolsa+escpub+d_moraso+cat_adm+org_acad+regiao_curso+np_infra+np_me+np_dr+np_rt+idade_M+renda_IES+
+(1|ID_IES), REML=FALSE, data=Dados_2018)
+sink(file = "Modelo_full_2018.txt")
+summary(Modelo_full_2018)
+confint(Modelo_full_2018)
+sink(file = NULL)
+vcov_Modelo_full_2018<-round(as.matrix(vcov(Modelo_full_2018)), 2)
+write.table(vcov_Modelo_full_2018, file = "Modelo_full_2018_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com variaveis do Nivel 1 (aluno) e Nivel 2 (IES) + Interacoes - 2012 - apenas N_OBJ
+```{r}
+Modelo_INTER_2012=lmer(N_OBJ~MOD+d_not+c_idade+d_sexf+d_etnia+dedicH+livros+d_ecivil+renda+d_afirm+d_bolsa+escpub+d_moraso+cat_adm+org_acad+regiao_curso+np_infra+np_me+np_dr+np_rt+idade_M+renda_IES+MOD*d_not+MOD*c_idade+MOD*d_etnia+MOD*renda_IES+(1|ID_IES), REML=FALSE, data=Dados_2012)
+sink(file = "Modelo_INTER_2012.txt")
+summary(Modelo_INTER_2012)
+confint(Modelo_INTER_2012)
+sink(file = NULL)
+vcov_Modelo_INTER_2012<-round(as.matrix(vcov(Modelo_INTER_2012)), 2)
+write.table(vcov_Modelo_INTER_2012, file = "Modelo_INTER_2012_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com variaveis do Nivel 1 (aluno) e Nivel 2 (IES) + Interacoes - 2015 - apenas N_OBJ
+```{r}
+Modelo_INTER_2015=lmer(N_OBJ~MOD+d_not+c_idade+d_sexf+d_etnia+dedicH+livros+d_ecivil+renda+d_afirm+d_bolsa+escpub+d_moraso+cat_adm+org_acad+regiao_curso+np_infra+np_me+np_dr+np_rt+idade_M+renda_IES+MOD*d_not+MOD*c_idade+MOD*d_etnia+MOD*renda_IES+(1|ID_IES), REML=FALSE, data=Dados_2015)
+sink(file = "Modelo_INTER_2015.txt")
+summary(Modelo_INTER_2015)
+confint(Modelo_INTER_2015)
+sink(file = NULL)
+vcov_Modelo_INTER_2015<-round(as.matrix(vcov(Modelo_INTER_2015)), 2)
+write.table(vcov_Modelo_INTER_2015, file = "Modelo_INTER_2015_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com variaveis do Nivel 1 (aluno) e Nivel 2 (IES) + Interacoes - 2018 - apenas N_OBJ
+```{r}
+Modelo_INTER_2018=lmer(N_OBJ~MOD+d_not+c_idade+d_sexf+d_etnia+dedicH+livros+d_ecivil+renda+d_afirm+d_bolsa+escpub+d_moraso+cat_adm+org_acad+regiao_curso+np_infra+np_me+np_dr+np_rt+idade_M+renda_IES+MOD*d_not+MOD*c_idade+MOD*d_etnia+MOD*renda_IES+(1|ID_IES), REML=FALSE, data=Dados_2018)
+sink(file = "Modelo_INTER_2018.txt")
+summary(Modelo_INTER_2018)
+confint(Modelo_INTER_2018)
+sink(file = NULL)
+vcov_Modelo_INTER_2018<-round(as.matrix(vcov(Modelo_INTER_2018)), 2)
+write.table(vcov_Modelo_INTER_2018, file = "Modelo_INTER_2018_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com intercepto e inclinacao aleatoria - 2012 - apenas N_OBJ
+```{r}
+Modelo_full_RandomSlope_2012=lmer(N_OBJ~MOD+d_not+c_idade+d_sexf+d_etnia+dedicH+livros+d_ecivil+renda+d_afirm+d_bolsa+escpub+d_moraso+cat_adm+org_acad+regiao_curso+np_infra+np_me+np_dr+np_rt+idade_M+renda_IES+(MOD|ID_IES), REML=FALSE, data=Dados_2012)
+sink(file = "Modelo_full_RandomSlope_2012.txt")
+summary(Modelo_full_RandomSlope_2012)
+confint(Modelo_full_RandomSlope_2012)
+sink(file = NULL)
+vcov_Modelo_full_RandomSlope_2012<-round(as.matrix(vcov(Modelo_full_RandomSlope_2012)), 2)
+write.table(vcov_Modelo_full_RandomSlope_2012, file = "Modelo_full_RandomSlope_2012_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com intercepto e inclinacao aleatoria - 2015 - apenas N_OBJ
+```{r}
+Modelo_full_RandomSlope_2015=lmer(N_OBJ~MOD+d_not+c_idade+d_sexf+d_etnia+dedicH+livros+d_ecivil+renda+d_afirm+d_bolsa+escpub+d_moraso+cat_adm+org_acad+regiao_curso+np_infra+np_me+np_dr+np_rt+idade_M+renda_IES+(MOD|ID_IES), REML=FALSE, data=Dados_2015)
+sink(file = "Modelo_full_RandomSlope_2015.txt")
+summary(Modelo_full_RandomSlope_2015)
+confint(Modelo_full_RandomSlope_2015)
+sink(file = NULL)
+vcov_Modelo_full_RandomSlope_2015<-round(as.matrix(vcov(Modelo_full_RandomSlope_2015)), 2)
+write.table(vcov_Modelo_full_RandomSlope_2015, file = "Modelo_full_RandomSlope_2015_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com intercepto e inclinacao aleatoria - 2018 - apenas N_OBJ
+```{r}
+Modelo_full_RandomSlope_2018=lmer(N_OBJ~MOD+d_not+c_idade+d_sexf+d_etnia+dedicH+livros+d_ecivil+renda+d_afirm+d_bolsa+escpub+d_moraso+cat_adm+org_acad+regiao_curso+np_infra+np_me+np_dr+np_rt+idade_M+renda_IES+(MOD|ID_IES), REML=FALSE, data=Dados_2018)
+sink(file = "Modelo_full_RandomSlope_2018.txt")
+summary(Modelo_full_RandomSlope_2018)
+confint(Modelo_full_RandomSlope_2018)
+sink(file = NULL)
+vcov_Modelo_full_RandomSlope_2018<-round(as.matrix(vcov(Modelo_full_RandomSlope_2018)), 2)
+write.table(vcov_Modelo_full_RandomSlope_2018, file = "Modelo_full_RandomSlope_2018_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com intercepto e inclinacao aleatoria + interacoes 2012 - apenas N_OBJ
+```{r}
+Modelo_InterRandomSlope_2012=lmer(N_OBJ~MOD+d_not+c_idade+d_sexf+d_etnia+dedicH+livros+d_ecivil+renda+d_afirm+d_bolsa+escpub+d_moraso+cat_adm+org_acad+regiao_curso+np_infra+np_me+np_dr+np_rt+idade_M+renda_IES+MOD*d_not+MOD*c_idade+MOD*d_etnia+MOD*renda_IES+(MOD|ID_IES), REML=FALSE, data=Dados_2012, control = lmerControl(optimizer ="Nelder_Mead"))
+sink(file = "Modelo_InterRandomSlope_2012.txt")
+summary(Modelo_InterRandomSlope_2012)
+confint(Modelo_InterRandomSlope_2012)
+sink(file = NULL)
+vcov_Modelo_InterRandomSlope_2012<-round(as.matrix(vcov(Modelo_InterRandomSlope_2012)), 2)
+write.table(vcov_Modelo_InterRandomSlope_2012, file = "Modelo_InterRandomSlope_2012_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com intercepto e inclinacao aleatoria + interacoes 2015 - apenas N_OBJ
+```{r}
+Modelo_InterRandomSlope_2015=lmer(N_OBJ~MOD+d_not+c_idade+d_sexf+d_etnia+dedicH+livros+d_ecivil+renda+d_afirm+d_bolsa+escpub+d_moraso+cat_adm+org_acad+regiao_curso+np_infra+np_me+np_dr+np_rt+idade_M+renda_IES+MOD*d_not+MOD*c_idade+MOD*d_etnia+MOD*renda_IES+(MOD|ID_IES), REML=FALSE, data=Dados_2015, control = lmerControl(optimizer ="Nelder_Mead"))
+sink(file = "Modelo_InterRandomSlope_2015.txt")
+summary(Modelo_InterRandomSlope_2015)
+confint(Modelo_InterRandomSlope_2015)
+sink(file = NULL)
+vcov_Modelo_InterRandomSlope_2015<-round(as.matrix(vcov(Modelo_InterRandomSlope_2015)), 2)
+write.table(vcov_Modelo_InterRandomSlope_2015, file = "Modelo_InterRandomSlope_2015_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com intercepto e inclinacao aleatoria + interacoes 2018 - apenas N_OBJ
+```{r}
+Modelo_InterRandomSlope_2018=lmer(N_OBJ~MOD+d_not+c_idade+d_sexf+d_etnia+dedicH+livros+d_ecivil+renda+d_afirm+d_bolsa+escpub+d_moraso+cat_adm+org_acad+regiao_curso+np_infra+np_me+np_dr+np_rt+idade_M+renda_IES+MOD*d_not+MOD*c_idade+MOD*d_etnia+MOD*renda_IES+(MOD|ID_IES), REML=FALSE, data=Dados_2018, control = lmerControl(optimizer ="Nelder_Mead"))
+sink(file = "Modelo_InterRandomSlope_2018.txt")
+summary(Modelo_InterRandomSlope_2018)
+confint(Modelo_InterRandomSlope_2018)
+sink(file = NULL)
+vcov_Modelo_InterRandomSlope_2018<-round(as.matrix(vcov(Modelo_InterRandomSlope_2018)), 2)
+write.table(vcov_Modelo_InterRandomSlope_2018, file = "Modelo_InterRandomSlope_2018_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo Nulo 2012 - NOTA GERAL
+```{r}
+Modelo_nulo_2012=lmer(NG~1+(1|ID_IES), REML=FALSE, data=Dados_2012)
+summary(Modelo_nulo_2012) #ver o resultado da estimação
+sink(file = "Modelo_nulo_2012.txt") # Cria o arquivo com output
+summary(Modelo_nulo_2012) #output do modelo nulo, que sera usado pela funcao sink
+confint(Modelo_nulo_2012) #Calcula o intervalo de confianca dos parametros dos modelo.
+sink(file = NULL) #finalizar a funcao
+```
+Modelo Nulo 2015 - NOTA GERAL
+```{r}
+Modelo_nulo_2015=lmer(NG~1+(1|ID_IES), REML=FALSE, data=Dados_2015)
+sink(file = "Modelo_nulo_2015.txt")
+summary(Modelo_nulo_2015)
+confint(Modelo_nulo_2015)
+sink(file = NULL)
+```
+Modelo Nulo 2018 - NOTA GERAL
+```{r}
+Modelo_nulo_2018=lmer(NG~1+(1|ID_IES), REML=FALSE, data=Dados_2018)
+sink(file = "Modelo_nulo_2018.txt")
+summary(Modelo_nulo_2018)
+confint(Modelo_nulo_2018)
+sink(file = NULL)
+```
+Modelo com variavel MOD 2012 - NOTA GERAL
+```{r}
+Modelo_MOD_2012=lmer(NG~MOD+(1|ID_IES), REML=FALSE, data=Dados_2012)
+sink(file = "Modelo_MOD_2012.txt")
+summary(Modelo_MOD_2012)
+confint(Modelo_MOD_2012)
+sink(file = NULL)
+vcov_Modelo_MOD_2012<-round(as.matrix(vcov(Modelo_MOD_2012)), 2)
+write.table(vcov_Modelo_MOD_2012, file = "Modelo_MOD_2012_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com variavel MOD 2015 - NOTA GERAL
+```{r}
+Modelo_MOD_2015=lmer(NG~MOD+(1|ID_IES), REML=FALSE, data=Dados_2015)
+sink(file = "Modelo_MOD_2015.txt")
+summary(Modelo_MOD_2015)
+confint(Modelo_MOD_2015)
+sink(file = NULL)
+vcov_Modelo_MOD_2015<-round(as.matrix(vcov(Modelo_MOD_2015)), 2)
+write.table(vcov_Modelo_MOD_2015, file = "Modelo_MOD_2015_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com variavel MOD 2018 - NOTA GERAL
+```{r}
+Modelo_MOD_2018=lmer(NG~MOD+(1|ID_IES), REML=FALSE, data=Dados_2018)
+sink(file = "Modelo_MOD_2018.txt")
+summary(Modelo_MOD_2018)
+confint(Modelo_MOD_2018)
+sink(file = NULL)
+vcov_Modelo_MOD_2018<-round(as.matrix(vcov(Modelo_MOD_2018)), 2)
+write.table(vcov_Modelo_MOD_2018, file = "Modelo_MOD_2018_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com variaveis do Nivel 1 (aluno) - 2012 - NOTA GERAL
+```{r}
+Modelo_1_2012=lmer(NG~MOD+d_not+c_idade+d_sexf+d_etnia+dedicH+livros+d_ecivil+renda+d_afirm+d_bolsa+escpub+d_moraso+(1|ID_IES), REML=FALSE, data=Dados_2012)
+sink(file = "Modelo_1_2012.txt")
+summary(Modelo_1_2012)
+confint(Modelo_1_2012)
+sink(file = NULL)
+vcov_Modelo_1_2012<-round(as.matrix(vcov(Modelo_1_2012)), 2)
+write.table(vcov_Modelo_1_2012, file = "Modelo_1_2012_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com variaveis do Nivel 1 (aluno) - 2015 - NOTA GERAL
+```{r}
+Modelo_1_2015=lmer(NG~MOD+d_not+c_idade+d_sexf+d_etnia+dedicH+livros+d_ecivil+renda+d_afirm+d_bolsa+escpub+d_moraso+(1|ID_IES), REML=FALSE, data=Dados_2015)
+sink(file = "Modelo_1_2015.txt")
+summary(Modelo_1_2015)
+confint(Modelo_1_2015)
+sink(file = NULL)
+vcov_Modelo_1_2015<-round(as.matrix(vcov(Modelo_1_2015)), 2)
+write.table(vcov_Modelo_1_2015, file = "Modelo_1_2015_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com variaveis do Nivel 1 (aluno) - 2018 - NOTA GERAL
+```{r}
+Modelo_1_2018=lmer(NG~MOD+d_not+c_idade+d_sexf+d_etnia+dedicH+livros+d_ecivil+renda+d_afirm+d_bolsa+escpub+d_moraso+(1|ID_IES), REML=FALSE, data=Dados_2018)
+sink(file = "Modelo_1_2018.txt")
+summary(Modelo_1_2018)
+confint(Modelo_1_2018)
+sink(file = NULL)
+vcov_Modelo_1_2018<-round(as.matrix(vcov(Modelo_1_2018)), 2)
+write.table(vcov_Modelo_1_2018, file = "Modelo_1_2018_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com variaveis do Nivel 1 (aluno) e inclinacao aleatoria - 2012 - NOTA GERAL
+```{r}
+Modelo_1_Randomslope_2012=lmer(NG~MOD+d_not+c_idade+d_sexf+d_etnia+dedicH+livros+d_ecivil+renda+d_afirm+d_bolsa+escpub+d_moraso+(MOD|ID_IES), REML=FALSE, data=Dados_2012)
+sink(file = "Modelo_1_Randomslope_2012.txt")
+summary(Modelo_1_Randomslope_2012)
+confint(Modelo_1_Randomslope_2012)
+sink(file = NULL)
+vcov_Modelo_1_Randomslope_2012<-round(as.matrix(vcov(Modelo_1_Randomslope_2012)), 2)
+write.table(vcov_Modelo_1_Randomslope_2012, file = "Modelo_1_Randomslope_2012_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com variaveis do Nivel 1 (aluno) e inclinacao aleatoria - 2015 - NOTA GERAL
+```{r}
+Modelo_1_Randomslope_2015=lmer(NG~MOD+d_not+c_idade+d_sexf+d_etnia+dedicH+livros+d_ecivil+renda+d_afirm+d_bolsa+escpub+d_moraso+(MOD|ID_IES), REML=FALSE, data=Dados_2015)
+sink(file = "Modelo_1_Randomslope_2015.txt")
+summary(Modelo_1_Randomslope_2015)
+confint(Modelo_1_Randomslope_2015)
+sink(file = NULL)
+vcov_Modelo_1_Randomslope_2015<-round(as.matrix(vcov(Modelo_1_Randomslope_2015)), 2)
+write.table(vcov_Modelo_1_Randomslope_2015, file = "Modelo_1_Randomslope_2015_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com variaveis do Nivel 1 (aluno) e inclinacao aleatoria - 2018 - NOTA GERAL
+```{r}
+Modelo_1_Randomslope_2018=lmer(NG~MOD+d_not+c_idade+d_sexf+d_etnia+dedicH+livros+d_ecivil+renda+d_afirm+d_bolsa+escpub+d_moraso+(MOD|ID_IES), REML=FALSE, data=Dados_2018)
+sink(file = "Modelo_1_Randomslope_2018.txt")
+summary(Modelo_1_Randomslope_2018)
+confint(Modelo_1_Randomslope_2018)
+sink(file = NULL)
+vcov_Modelo_1_Randomslope_2018<-round(as.matrix(vcov(Modelo_1_Randomslope_2018)), 2)
+write.table(vcov_Modelo_1_Randomslope_2018, file = "Modelo_1_Randomslope_2018_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com variaveis do Nivel 2 (IES) - 2012 - NOTA GERAL
+```{r}
+Modelo_2_2012=lmer(NG~cat_adm+org_acad+regiao_curso+np_infra+np_me+np_dr+np_rt+idade_M+renda_IES+(1|ID_IES), REML=FALSE, data=Dados_2012)
+sink(file = "Modelo_2_2012.txt")
+summary(Modelo_2_2012)
+confint(Modelo_2_2012)
+sink(file = NULL)
+vcov_Modelo_2_2012<-round(as.matrix(vcov(Modelo_2_2012)), 2)
+write.table(vcov_Modelo_2_2012, file = "Modelo_2_2012_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com variaveis do Nivel 2 (IES) - 2015 - NOTA GERAL
+```{r}
+Modelo_2_2015=lmer(NG~cat_adm+org_acad+regiao_curso+np_infra+np_me+np_dr+np_rt+idade_M+renda_IES+(1|ID_IES), REML=FALSE, data=Dados_2015)
+sink(file = "Modelo_2_2015.txt")
+summary(Modelo_2_2015)
+confint(Modelo_2_2015)
+sink(file = NULL)
+vcov_Modelo_2_2015<-round(as.matrix(vcov(Modelo_2_2015)), 2)
+write.table(vcov_Modelo_2_2015, file = "Modelo_2_2015_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com variaveis do Nivel 2 (IES) - 2018 - NOTA GERAL
+```{r}
+Modelo_2_2018=lmer(NG~cat_adm+org_acad+regiao_curso+np_infra+np_me+np_dr+np_rt+idade_M+renda_IES+(1|ID_IES), REML=FALSE, data=Dados_2018)
+sink(file = "Modelo_2_2018.txt")
+summary(Modelo_2_2018)
+confint(Modelo_2_2018)
+sink(file = NULL)
+vcov_Modelo_2_2018<-round(as.matrix(vcov(Modelo_2_2018)), 2)
+write.table(vcov_Modelo_2_2018, file = "Modelo_2_2018_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com variaveis do Nivel 1 (aluno) e Nivel 2 (IES) - 2012 - NOTA GERAL
+```{r}
+Modelo_full_2012=lmer(NG~MOD+d_not+c_idade+d_sexf+d_etnia+dedicH+livros+d_ecivil+renda+d_afirm+d_bolsa+escpub+d_moraso+cat_adm+org_acad+regiao_curso+np_infra+np_me+np_dr+np_rt+idade_M+renda_IES+(1|ID_IES), REML=FALSE, data=Dados_2012)
+sink(file = "Modelo_full_2012.txt")
+summary(Modelo_full_2012)
+confint(Modelo_full_2012)
+sink(file = NULL)
+vcov_Modelo_full_2012<-round(as.matrix(vcov(Modelo_full_2012)), 2)
+write.table(vcov_Modelo_full_2012, file = "Modelo_full_2012_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com variaveis do Nivel 1 (aluno) e Nivel 2 (IES) - 2015 - NOTA GERAL
+```{r}
+Modelo_full_2015=lmer(NG~MOD+d_not+c_idade+d_sexf+d_etnia+dedicH+livros+d_ecivil+renda+d_afirm+d_bolsa+escpub+d_moraso+cat_adm+org_acad+regiao_curso+np_infra+np_me+np_dr+np_rt+idade_M+renda_IES+(1|ID_IES), REML=FALSE, data=Dados_2015)
+sink(file = "Modelo_full_2015.txt")
+summary(Modelo_full_2015)
+confint(Modelo_full_2015)
+sink(file = NULL)
+vcov_Modelo_full_2015<-round(as.matrix(vcov(Modelo_full_2015)), 2)
+write.table(vcov_Modelo_full_2015, file = "Modelo_full_2015_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com variaveis do Nivel 1 (aluno) e Nivel 2 (IES) - 2018 - NOTA GERAL
+```{r}
+Modelo_full_2018=lmer(NG~MOD+d_not+c_idade+d_sexf+d_etnia+dedicH+livros+d_ecivil+renda+d_afirm+d_bolsa+escpub+d_moraso+cat_adm+org_acad+regiao_curso+np_infra+np_me+np_dr+np_rt+idade_M+renda_IES+(1|ID_IES), REML=FALSE, data=Dados_2018)
+sink(file = "Modelo_full_2018.txt")
+summary(Modelo_full_2018)
+confint(Modelo_full_2018)
+sink(file = NULL)
+vcov_Modelo_full_2018<-round(as.matrix(vcov(Modelo_full_2018)), 2)
+write.table(vcov_Modelo_full_2018, file = "Modelo_full_2018_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com variaveis do Nivel 1 (aluno) e Nivel 2 (IES) + Interacoes - 2012 - NOTA GERAL
+```{r}
+Modelo_INTER_2012=lmer(NG~MOD+d_not+c_idade+d_sexf+d_etnia+dedicH+livros+d_ecivil+renda+d_afirm+d_bolsa+escpub+d_moraso+cat_adm+org_acad+regiao_curso+np_infra+np_me+np_dr+np_rt+idade_M+renda_IES+MOD*d_not+MOD*c_idade+MOD*d_etnia+MOD*renda_IES+(1|ID_IES), REML=FALSE, data=Dados_2012)
+sink(file = "Modelo_INTER_2012.txt")
+summary(Modelo_INTER_2012)
+confint(Modelo_INTER_2012)
+sink(file = NULL)
+vcov_Modelo_INTER_2012<-round(as.matrix(vcov(Modelo_INTER_2012)), 2)
+write.table(vcov_Modelo_INTER_2012, file = "Modelo_INTER_2012_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com variaveis do Nivel 1 (aluno) e Nivel 2 (IES) + Interacoes - 2015 - NOTA GERAL
+```{r}
+Modelo_INTER_2015=lmer(NG~MOD+d_not+c_idade+d_sexf+d_etnia+dedicH+livros+d_ecivil+renda+d_afirm+d_bolsa+escpub+d_moraso+cat_adm+org_acad+regiao_curso+np_infra+np_me+np_dr+np_rt+idade_M+renda_IES+MOD*d_not+MOD*c_idade+MOD*d_etnia+MOD*renda_IES+(1|ID_IES), REML=FALSE, data=Dados_2015)
+sink(file = "Modelo_INTER_2015.txt")
+summary(Modelo_INTER_2015)
+confint(Modelo_INTER_2015)
+sink(file = NULL)
+vcov_Modelo_INTER_2015<-round(as.matrix(vcov(Modelo_INTER_2015)), 2)
+write.table(vcov_Modelo_INTER_2015, file = "Modelo_INTER_2015_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com variaveis do Nivel 1 (aluno) e Nivel 2 (IES) + Interacoes - 2018 - NOTA GERAL
+```{r}
+Modelo_INTER_2018=lmer(NG~MOD+d_not+c_idade+d_sexf+d_etnia+dedicH+livros+d_ecivil+renda+d_afirm+d_bolsa+escpub+d_moraso+cat_adm+org_acad+regiao_curso+np_infra+np_me+np_dr+np_rt+idade_M+renda_IES+MOD*d_not+MOD*c_idade+MOD*d_etnia+MOD*renda_IES+(1|ID_IES), REML=FALSE, data=Dados_2018)
+sink(file = "Modelo_INTER_2018.txt")
+summary(Modelo_INTER_2018)
+confint(Modelo_INTER_2018)
+sink(file = NULL)
+vcov_Modelo_INTER_2018<-round(as.matrix(vcov(Modelo_INTER_2018)), 2)
+write.table(vcov_Modelo_INTER_2018, file = "Modelo_INTER_2018_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com intercepto e inclinacao aleatoria - 2012 - NOTA GERAL
+```{r}
+Modelo_full_RandomSlope_2012=lmer(NG~MOD+d_not+c_idade+d_sexf+d_etnia+dedicH+livros+d_ecivil+renda+d_afirm+d_bolsa+escpub+d_moraso+cat_adm+org_acad+regiao_curso+np_infra+np_me+np_dr+np_rt+idade_M+renda_IES+(MOD|ID_IES), REML=FALSE, data=Dados_2012)
+sink(file = "Modelo_full_RandomSlope_2012.txt")
+summary(Modelo_full_RandomSlope_2012)
+confint(Modelo_full_RandomSlope_2012)
+sink(file = NULL)
+vcov_Modelo_full_RandomSlope_2012<-round(as.matrix(vcov(Modelo_full_RandomSlope_2012)), 2)
+write.table(vcov_Modelo_full_RandomSlope_2012, file = "Modelo_full_RandomSlope_2012_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com intercepto e inclinacao aleatoria - 2015 - NOTA GERAL
+```{r}
+Modelo_full_RandomSlope_2015=lmer(NG~MOD+d_not+c_idade+d_sexf+d_etnia+dedicH+livros+d_ecivil+renda+d_afirm+d_bolsa+escpub+d_moraso+cat_adm+org_acad+regiao_curso+np_infra+np_me+np_dr+np_rt+idade_M+renda_IES+(MOD|ID_IES), REML=FALSE, data=Dados_2015)
+sink(file = "Modelo_full_RandomSlope_2015.txt")
+summary(Modelo_full_RandomSlope_2015)
+confint(Modelo_full_RandomSlope_2015)
+sink(file = NULL)
+vcov_Modelo_full_RandomSlope_2015<-round(as.matrix(vcov(Modelo_full_RandomSlope_2015)), 2)
+write.table(vcov_Modelo_full_RandomSlope_2015, file = "Modelo_full_RandomSlope_2015_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com intercepto e inclinacao aleatoria - 2018 - NOTA GERAL
+```{r}
+Modelo_full_RandomSlope_2018=lmer(NG~MOD+d_not+c_idade+d_sexf+d_etnia+dedicH+livros+d_ecivil+renda+d_afirm+d_bolsa+escpub+d_moraso+cat_adm+org_acad+regiao_curso+np_infra+np_me+np_dr+np_rt+idade_M+renda_IES+(MOD|ID_IES), REML=FALSE, data=Dados_2018)
+sink(file = "Modelo_full_RandomSlope_2018.txt")
+summary(Modelo_full_RandomSlope_2018)
+confint(Modelo_full_RandomSlope_2018)
+sink(file = NULL)
+vcov_Modelo_full_RandomSlope_2018<-round(as.matrix(vcov(Modelo_full_RandomSlope_2018)), 2)
+write.table(vcov_Modelo_full_RandomSlope_2018, file = "Modelo_full_RandomSlope_2018_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com intercepto e inclinacao aleatoria + interacoes 2012 - NOTA GERAL
+```{r}
+Modelo_InterRandomSlope_2012=lmer(NG~MOD+d_not+c_idade+d_sexf+d_etnia+dedicH+livros+d_ecivil+renda+d_afirm+d_bolsa+escpub+d_moraso+cat_adm+org_acad+regiao_curso+np_infra+np_me+np_dr+np_rt+idade_M+renda_IES+MOD*d_not+MOD*c_idade+MOD*d_etnia+MOD*renda_IES+(MOD|ID_IES), REML=FALSE, data=Dados_2012, control = lmerControl(optimizer ="Nelder_Mead"))
+sink(file = "Modelo_InterRandomSlope_2012.txt")
+summary(Modelo_InterRandomSlope_2012)
+confint(Modelo_InterRandomSlope_2012)
+sink(file = NULL)
+vcov_Modelo_InterRandomSlope_2012<-round(as.matrix(vcov(Modelo_InterRandomSlope_2012)), 2)
+write.table(vcov_Modelo_InterRandomSlope_2012, file = "Modelo_InterRandomSlope_2012_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com intercepto e inclinacao aleatoria + interacoes 2015 - NOTA GERAL
+```{r}
+Modelo_InterRandomSlope_2015=lmer(NG~MOD+d_not+c_idade+d_sexf+d_etnia+dedicH+livros+d_ecivil+renda+d_afirm+d_bolsa+escpub+d_moraso+cat_adm+org_acad+regiao_curso+np_infra+np_me+np_dr+np_rt+idade_M+renda_IES+MOD*d_not+MOD*c_idade+MOD*d_etnia+MOD*renda_IES+(MOD|ID_IES), REML=FALSE, data=Dados_2015, control = lmerControl(optimizer ="Nelder_Mead"))
+sink(file = "Modelo_InterRandomSlope_2015.txt")
+summary(Modelo_InterRandomSlope_2015)
+confint(Modelo_InterRandomSlope_2015)
+sink(file = NULL)
+vcov_Modelo_InterRandomSlope_2015<-round(as.matrix(vcov(Modelo_InterRandomSlope_2015)), 2)
+write.table(vcov_Modelo_InterRandomSlope_2015, file = "Modelo_InterRandomSlope_2015_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Modelo com intercepto e inclinacao aleatoria + interacoes 2018 - NOTA GERAL
+```{r}
+Modelo_InterRandomSlope_2018=lmer(NG~MOD+d_not+c_idade+d_sexf+d_etnia+dedicH+livros+d_ecivil+renda+d_afirm+d_bolsa+escpub+d_moraso+cat_adm+org_acad+regiao_curso+np_infra+np_me+np_dr+np_rt+idade_M+renda_IES+MOD*d_not+MOD*c_idade+MOD*d_etnia+MOD*renda_IES+(MOD|ID_IES), REML=FALSE, data=Dados_2018, control = lmerControl(optimizer ="Nelder_Mead"))
+sink(file = "Modelo_InterRandomSlope_2018.txt")
+summary(Modelo_InterRandomSlope_2018)
+confint(Modelo_InterRandomSlope_2018)
+sink(file = NULL)
+vcov_Modelo_InterRandomSlope_2018<-round(as.matrix(vcov(Modelo_InterRandomSlope_2018)), 2)
+write.table(vcov_Modelo_InterRandomSlope_2018, file = "Modelo_InterRandomSlope_2018_matriz_vcov.csv", sep = ";", dec = ",")
+```
+Teste anova de ajuste dos modelos - 2012, 2015, 2018
+```{r}
+sink(file = "Anova_modelos_2012.txt")
+Anova_2012 <- anova(Modelo_nulo_2012, Modelo_MOD_2012, Modelo_1_2012, Modelo_1_Randomslope_2012, Modelo_2_2012, Modelo_full_2012, Modelo_full_RandomSlope_2012, Modelo_INTER_2012, Modelo_InterRandomSlope_2012)
+Anova_2012
+sink(file = NULL)
+
+sink(file = "Anova_modelos_2015.txt")
+Anova_2015 <- anova(Modelo_nulo_2015, Modelo_MOD_2015, Modelo_1_2015, Modelo_1_Randomslope_2015, Modelo_2_2015, Modelo_full_2015, Modelo_full_RandomSlope_2015, Modelo_INTER_2015, Modelo_InterRandomSlope_2015)
+Anova_2015
+sink(file = NULL)
+
+sink(file = "Anova_modelos_2018.txt")
+Anova_2018 <- anova(Modelo_nulo_2018, Modelo_MOD_2018, Modelo_1_2018, Modelo_1_Randomslope_2018, Modelo_2_2018, Modelo_full_2018, Modelo_full_RandomSlope_2018, Modelo_INTER_2018, Modelo_InterRandomSlope_2018)
+Anova_2018
+sink(file = NULL)
+```
+Gerar coeficientes de efeitos fixos
+```{r}
+fixefect <- fixef(Modelo_InterRandomSlope_2012)
+fixefect
+```
+Gerar coeficientes de efeitos aleatórios
+```{r}
+randefect <- coef(Modelo_InterRandomSlope_2012)
+randefect
+```
+Avaliar normalidade no primeiro nivel - nivel de aluno - 2012
+```{r}
+ResiduoAlunoEij_2012=resid(Modelo_InterRandomSlope_2012)
+hist(ResiduoAlunoEij_2012)
+
+ggplot_qqnorm(ResiduoAlunoEij_2012, line = "rlm", main = "Q-Q Plot Normalidade residuos nivel 1 - 2012")
+
+hEij_2012=hist(ResiduoAlunoEij_2012, ylab="Frequência", xlab = NULL,
+          main="Análise dos resíduos nível aluno 2012")
+xfit=seq(min(ResiduoAlunoEij_2012),max(ResiduoAlunoEij_2012),length=40)
+yfit=dnorm(xfit,mean=mean(ResiduoAlunoEij_2012),sd=sd(ResiduoAlunoEij_2012))
+yfit=yfit*diff(hEij_2012$mids[1:2])*length(ResiduoAlunoEij_2012)
+lines(xfit, yfit, col="red", lwd=2)
+box()
+```
+Avaliar normalidade no primeiro nivel - nivel de aluno - 2015
+```{r}
+ResiduoAlunoEij_2015=resid(Modelo_InterRandomSlope_2015)
+hist(ResiduoAlunoEij_2015)
+
+## função indisponível ## ggplot_qqnorm(ResiduoAlunoEij_2015, line = "rlm", main = "Q-Q Plot Normalidade residuos nivel 1 - 2015")
+
+hEij_2015=hist(ResiduoAlunoEij_2015, ylab="Frequência", xlab = NULL,
+          main="Análise dos resíduos nível aluno 2015")
+xfit=seq(min(ResiduoAlunoEij_2015),max(ResiduoAlunoEij_2015),length=40)
+yfit=dnorm(xfit,mean=mean(ResiduoAlunoEij_2015),sd=sd(ResiduoAlunoEij_2015))
+yfit=yfit*diff(hEij_2015$mids[1:2])*length(ResiduoAlunoEij_2015)
+lines(xfit, yfit, col="red", lwd=2)
+box()
+```
+Avaliar normalidade no primeiro nivel - nivel de aluno - 2018
+```{r}
+ResiduoAlunoEij_2018=resid(Modelo_InterRandomSlope_2018)
+hist(ResiduoAlunoEij_2018)
+
+## funcao indisponivel ## ggplot_qqnorm(ResiduoAlunoEij_2018, line = "rlm", main = "Q-Q Plot Normalidade residuos nivel 1 - 2018")
+
+hEij_2018=hist(ResiduoAlunoEij_2018, ylab="Frequência", xlab = NULL,
+          main="Análise dos resíduos nível aluno 2018")
+xfit=seq(min(ResiduoAlunoEij_2018),max(ResiduoAlunoEij_2018),length=40)
+yfit=dnorm(xfit,mean=mean(ResiduoAlunoEij_2018),sd=sd(ResiduoAlunoEij_2018))
+yfit=yfit*diff(hEij_2018$mids[1:2])*length(ResiduoAlunoEij_2018)
+lines(xfit, yfit, col="red", lwd=2)
+box()
+```
+Analise de residuo no nivel da IES
+```{r}
+## funcao indisponivel ## ggplot_qqnorm(ResiduoIES_2012$`(Intercept)`, line = "rlm", main = "Q-Q Plot Normalidade Intercepto aleatório - 2012")
+
+## funcao indisponivel ## ggplot_qqnorm(ResiduoIES_2012$MODPresencial, line = "rlm", main = "Q-Q Plot Normalidade Inclinação aleatória - 2012")
+
+ResiduoIES_2012=hlm_resid(object = Modelo_InterRandomSlope_2012, level = "ID_IES", include.ls = FALSE)
+hist(ResiduoIES_2012, main="Análise dos resíduos nível IES 2012",
+     ylab="Número de IES", xlab = NULL)
+
+hIES_interc_2012=hist(ResiduoIES_2012$`(Intercept)`, ylab="Frequência", xlab = "Intercept",
+          main="Análise dos resíduos nível 2 U0j - 2012")
+xfit=seq(min(ResiduoIES_2012$`(Intercept)`),max(ResiduoIES_2012$`(Intercept)`),length=40)
+yfit=dnorm(xfit,mean=mean(ResiduoIES_2012$`(Intercept)`),sd=sd(ResiduoIES_2012$`(Intercept)`))
+yfit=yfit*diff(hIES_interc_2012$mids[1:2])*length(ResiduoIES_2012$`(Intercept)`)
+lines(xfit, yfit, col="red", lwd=2)
+box()
+
+hIES_MOD_2012=hist(ResiduoIES_2012$MODPresencial, ylab="Frequência", xlab = "MOD",
+          main="Análise dos resíduos nível 2 U1j - 2012")
+xfit=seq(min(ResiduoIES_2012$MODPresencial),max(ResiduoIES_2012$MODPresencial),length=40)
+yfit=dnorm(xfit,mean=mean(ResiduoIES_2012$MODPresencial),sd=sd(ResiduoIES_2012$MODPresencial))
+yfit=yfit*diff(hIES_MOD_2012$mids[1:2])*length(ResiduoIES_2012$MODPresencial)
+lines(xfit, yfit, col="red", lwd=2)
+box()
+
+## funcao indisponivel ## ggplot_qqnorm(ResiduoIES_2015$`(Intercept)`, line = "rlm", main = "Q-Q Plot Normalidade Intercepto aleatório - 2015")
+
+## funcao indisponivel ## ggplot_qqnorm(ResiduoIES_2015$MODPresencial, line = "rlm", main = "Q-Q Plot Normalidade Inclinação aleatória - 2015")
+
+ResiduoIES_2015=hlm_resid(object = Modelo_InterRandomSlope_2015, level = "ID_IES", include.ls = FALSE)
+hist(ResiduoIES_2015, main="Análise dos resíduos nível IES 2015",
+     ylab="Número de IES", xlab = NULL)
+
+hIES_interc_2015=hist(ResiduoIES_2015$`(Intercept)`, ylab="Frequência", xlab = "Intercept",
+          main="Análise dos resíduos nível 2 U0j - 2015")
+xfit=seq(min(ResiduoIES_2015$`(Intercept)`),max(ResiduoIES_2015$`(Intercept)`),length=40)
+yfit=dnorm(xfit,mean=mean(ResiduoIES_2015$`(Intercept)`),sd=sd(ResiduoIES_2015$`(Intercept)`))
+yfit=yfit*diff(hIES_interc_2015$mids[1:2])*length(ResiduoIES_2015$`(Intercept)`)
+lines(xfit, yfit, col="red", lwd=2)
+box()
+
+hIES_MOD_2015=hist(ResiduoIES_2015$MODPresencial, ylab="Frequência", xlab = "MOD",
+          main="Análise dos resíduos nível 2 U1j - 2015")
+xfit=seq(min(ResiduoIES_2015$MODPresencial),max(ResiduoIES_2015$MODPresencial),length=40)
+yfit=dnorm(xfit,mean=mean(ResiduoIES_2015$MODPresencial),sd=sd(ResiduoIES_2015$MODPresencial))
+yfit=yfit*diff(hIES_MOD_2015$mids[1:2])*length(ResiduoIES_2015$MODPresencial)
+lines(xfit, yfit, col="red", lwd=2)
+box()
+
+## funcao indisponivel ## ggplot_qqnorm(ResiduoIES_2018$`(Intercept)`, line = "rlm", main = "Q-Q Plot Normalidade Intercepto aleatório - 2018")
+
+## funcao indisponivel ## ggplot_qqnorm(ResiduoIES_2018$MODPresencial, line = "rlm", main = "Q-Q Plot Normalidade Inclinação aleatória - 2018")
+
+ResiduoIES_2018=hlm_resid(object = Modelo_InterRandomSlope_2018, level = "ID_IES", include.ls = FALSE)
+hist(ResiduoIES_2018, main="Análise dos resíduos nível IES 2018",
+     ylab="Número de IES", xlab = NULL)
+
+hIES_interc_2018=hist(ResiduoIES_2018$`(Intercept)`, ylab="Frequência", xlab = "Intercept",
+          main="Análise dos resíduos nível 2 U0j - 2018")
+xfit=seq(min(ResiduoIES_2018$`(Intercept)`),max(ResiduoIES_2018$`(Intercept)`),length=40)
+yfit=dnorm(xfit,mean=mean(ResiduoIES_2018$`(Intercept)`),sd=sd(ResiduoIES_2018$`(Intercept)`))
+yfit=yfit*diff(hIES_interc_2018$mids[1:2])*length(ResiduoIES_2018$`(Intercept)`)
+lines(xfit, yfit, col="red", lwd=2)
+box()
+
+hIES_MOD_2018=hist(ResiduoIES_2018$MODPresencial, ylab="Frequência", xlab = "MOD",
+          main="Análise dos resíduos nível 2 U1j - 2018")
+xfit=seq(min(ResiduoIES_2018$MODPresencial),max(ResiduoIES_2018$MODPresencial),length=40)
+yfit=dnorm(xfit,mean=mean(ResiduoIES_2018$MODPresencial),sd=sd(ResiduoIES_2018$MODPresencial))
+yfit=yfit*diff(hIES_MOD_2018$mids[1:2])*length(ResiduoIES_2018$MODPresencial)
+lines(xfit, yfit, col="red", lwd=2)
+box()
+```
+Analise de residuo marginal
+```{r}
+resid_marg_2012 <- HLMresid(object = Modelo_InterRandomSlope_2012, level = "marginal")
+ggplot_qqnorm(resid_marg_2012, line = "rlm",  main = "Q-Q Plot resíduo marginal - 2012")
+
+hmarg_2012=hist(resid_marg_2012, ylab="Frequência", xlab = NULL,
+          main="Análise do resíduo marginal 2012")
+xfit=seq(min(resid_marg_2012),max(resid_marg_2012),length=40)
+yfit=dnorm(xfit,mean=mean(resid_marg_2012),sd=sd(resid_marg_2012))
+yfit=yfit*diff(hmarg_2012$mids[1:2])*length(resid_marg_2012)
+lines(xfit, yfit, col="red", lwd=2)
+box()
+
+resid_marg_2015 <- HLMresid(object = Modelo_InterRandomSlope_2015, level = "marginal")
+ggplot_qqnorm(resid_marg_2015, line = "rlm", main = "Q-Q Plot resíduo marginal - 2015")
+
+hmarg_2015=hist(resid_marg_2015, ylab="Frequência", xlab = NULL,
+          main="Análise do resíduo marginal 2015")
+xfit=seq(min(resid_marg_2015),max(resid_marg_2015),length=40)
+yfit=dnorm(xfit,mean=mean(resid_marg_2015),sd=sd(resid_marg_2015))
+yfit=yfit*diff(hmarg_2015$mids[1:2])*length(resid_marg_2015)
+lines(xfit, yfit, col="red", lwd=2)
+box()
+
+resid_marg_2018 <- HLMresid(object = Modelo_InterRandomSlope_2018, level = "marginal")
+ggplot_qqnorm(resid_marg_2018, line = "rlm", main = "Q-Q Plot resíduo marginal - 2018")
+
+hmarg_2018=hist(resid_marg_2018, ylab="Frequência", xlab = NULL,
+          main="Análise do resíduo marginal 2018")
+xfit=seq(min(resid_marg_2018),max(resid_marg_2018),length=40)
+yfit=dnorm(xfit,mean=mean(resid_marg_2018),sd=sd(resid_marg_2018))
+yfit=yfit*diff(hmarg_2018$mids[1:2])*length(resid_marg_2018)
+lines(xfit, yfit, col="red", lwd=2)
+box()
+```
+
+
+Análise nota bruta por sexo, etnia e modalidade - Geral - todos os anos
+
+SexNGMODetnia<-describeBy(Dados_anos$NG, group = Dados_anos$d_sexf:Dados_anos$d_etnia:Dados_anos$MOD)
+
+Formato tabela - resumido
+
+SexNGMOD <- Dados %>% group_by(n_ano, d_sexf, MOD) %>% 
+  summarise(M?nimo = min(NG),
+            M?dia = mean(NG),
+            DP = sd(NG),
+            Mediana = median(NG),
+            M?ximo = max(NG))
+
+

@@ -1,0 +1,132 @@
+Linear mixed model fit by maximum likelihood .
+  t-tests use Satterthwaite's method [lmerModLmerTest
+]
+Formula: 
+NG ~ MOD + d_not + c_idade + d_sexf + d_etnia + dedicH + livros +  
+    d_ecivil + renda + d_afirm + d_bolsa + escpub + d_moraso +  
+    (1 | ID_IES)
+   Data: Dados_2018
+
+      AIC       BIC    logLik  deviance  df.resid 
+ 405522.1  405761.6 -202734.0  405468.1     52533 
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-3.8675 -0.6830 -0.0380  0.6411  4.3772 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ ID_IES   (Intercept)  16.28    4.035  
+ Residual             127.68   11.299  
+Number of obs: 52560, groups:  ID_IES, 836
+
+Fixed effects:
+                           Estimate Std. Error
+(Intercept)               3.503e+01  4.083e-01
+MODPresencial             1.762e+00  2.603e-01
+d_notNoturno             -1.800e+00  2.060e-01
+c_idade                  -8.047e-02  8.164e-03
+d_sexfFeminino           -2.762e+00  1.032e-01
+d_etniaBranco ou amarelo  8.208e-01  1.091e-01
+dedicH1h a 3h             6.623e-01  1.878e-01
+dedicH4h a 7h             1.769e+00  2.042e-01
+dedicH8h a 12h            2.431e+00  2.546e-01
+dedicHMais d 12h          2.713e+00  2.824e-01
+livrosUm ou dois          8.699e-03  1.425e-01
+livrosTrês a cinco        8.078e-01  1.580e-01
+livrosSeis a oito         5.845e-01  2.319e-01
+livrosMais de oito        1.044e+00  2.231e-01
+d_ecivilSolteiro         -5.142e-01  1.245e-01
+renda1,5 a 3 SM           9.426e-01  1.552e-01
+renda3 a 4,5 SM           2.032e+00  1.673e-01
+renda4,5 a 6 SM           3.306e+00  2.041e-01
+renda6 a 10 SM            4.585e+00  2.169e-01
+renda10 a 30 SM           6.788e+00  2.901e-01
+rendaMais de 30 SM        6.381e+00  6.472e-01
+d_afirmIngressou por PAA  1.649e+00  1.304e-01
+d_bolsaBolsista           1.213e+00  1.255e-01
+escpubEM esc pública     -1.361e+00  1.461e-01
+d_morasoMora sozinho      8.067e-01  1.856e-01
+                                 df t value Pr(>|t|)
+(Intercept)               1.692e+04  85.777  < 2e-16
+MODPresencial             4.437e+04   6.771 1.30e-11
+d_notNoturno              4.695e+04  -8.738  < 2e-16
+c_idade                   5.249e+04  -9.857  < 2e-16
+d_sexfFeminino            5.223e+04 -26.748  < 2e-16
+d_etniaBranco ou amarelo  5.243e+04   7.525 5.36e-14
+dedicH1h a 3h             5.224e+04   3.526 0.000422
+dedicH4h a 7h             5.227e+04   8.663  < 2e-16
+dedicH8h a 12h            5.230e+04   9.550  < 2e-16
+dedicHMais d 12h          5.248e+04   9.607  < 2e-16
+livrosUm ou dois          5.215e+04   0.061 0.951331
+livrosTrês a cinco        5.228e+04   5.113 3.18e-07
+livrosSeis a oito         5.238e+04   2.520 0.011726
+livrosMais de oito        5.247e+04   4.677 2.91e-06
+d_ecivilSolteiro          5.220e+04  -4.131 3.62e-05
+renda1,5 a 3 SM           5.228e+04   6.073 1.26e-09
+renda3 a 4,5 SM           5.247e+04  12.149  < 2e-16
+renda4,5 a 6 SM           5.245e+04  16.198  < 2e-16
+renda6 a 10 SM            5.247e+04  21.136  < 2e-16
+renda10 a 30 SM           5.242e+04  23.400  < 2e-16
+rendaMais de 30 SM        5.224e+04   9.860  < 2e-16
+d_afirmIngressou por PAA  5.256e+04  12.642  < 2e-16
+d_bolsaBolsista           4.970e+04   9.667  < 2e-16
+escpubEM esc pública      5.255e+04  -9.320  < 2e-16
+d_morasoMora sozinho      5.226e+04   4.346 1.39e-05
+                            
+(Intercept)              ***
+MODPresencial            ***
+d_notNoturno             ***
+c_idade                  ***
+d_sexfFeminino           ***
+d_etniaBranco ou amarelo ***
+dedicH1h a 3h            ***
+dedicH4h a 7h            ***
+dedicH8h a 12h           ***
+dedicHMais d 12h         ***
+livrosUm ou dois            
+livrosTrês a cinco       ***
+livrosSeis a oito        *  
+livrosMais de oito       ***
+d_ecivilSolteiro         ***
+renda1,5 a 3 SM          ***
+renda3 a 4,5 SM          ***
+renda4,5 a 6 SM          ***
+renda6 a 10 SM           ***
+renda10 a 30 SM          ***
+rendaMais de 30 SM       ***
+d_afirmIngressou por PAA ***
+d_bolsaBolsista          ***
+escpubEM esc pública     ***
+d_morasoMora sozinho     ***
+---
+Signif. codes:  
+0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+                               2.5 %      97.5 %
+.sig01                    3.79335409  4.29548484
+.sigma                   11.23087089 11.36856034
+(Intercept)              34.22466356 35.82539869
+MODPresencial             1.25219217  2.27267321
+d_notNoturno             -2.20405687 -1.39611741
+c_idade                  -0.09647653 -0.06446934
+d_sexfFeminino           -2.96397834 -2.55924658
+d_etniaBranco ou amarelo  0.60692268  1.03471942
+dedicH1h a 3h             0.29416550  1.03034259
+dedicH4h a 7h             1.36865427  2.16918247
+dedicH8h a 12h            1.93233869  2.93054285
+dedicHMais d 12h          2.15986449  3.26713717
+livrosUm ou dois         -0.27064738  0.28804298
+livrosTrês a cinco        0.49813830  1.11745495
+livrosSeis a oito         0.12993805  1.03903752
+livrosMais de oito        0.60629786  1.48095872
+d_ecivilSolteiro         -0.75817676 -0.27015845
+renda1,5 a 3 SM           0.63833320  1.24678305
+renda3 a 4,5 SM           1.70417338  2.36013998
+renda4,5 a 6 SM           2.90545953  3.70599209
+renda6 a 10 SM            4.15961028  5.01074287
+renda10 a 30 SM           6.21910794  7.35745753
+rendaMais de 30 SM        5.11238948  7.65013568
+d_afirmIngressou por PAA  1.39314011  1.90489323
+d_bolsaBolsista           0.96669696  1.45937073
+escpubEM esc pública     -1.64772448 -1.07500824
+d_morasoMora sozinho      0.44285876  1.17048697

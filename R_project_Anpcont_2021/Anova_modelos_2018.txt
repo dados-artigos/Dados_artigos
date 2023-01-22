@@ -1,0 +1,54 @@
+Data: Dados_2018
+Models:
+Modelo_nulo_2018: NG ~ 1 + (1 | ID_IES)
+Modelo_MOD_2018: NG ~ MOD + (1 | ID_IES)
+Modelo_2_2018: NG ~ cat_adm + org_acad + regiao_curso + np_infra + np_me + np_dr + np_rt + idade_M + renda_IES + (1 | ID_IES)
+Modelo_1_2018: NG ~ MOD + d_not + c_idade + d_sexf + d_etnia + dedicH + livros + d_ecivil + renda + d_afirm + d_bolsa + escpub + d_moraso + (1 | ID_IES)
+Modelo_1_Randomslope_2018: NG ~ MOD + d_not + c_idade + d_sexf + d_etnia + dedicH + livros + d_ecivil + renda + d_afirm + d_bolsa + escpub + d_moraso + (MOD | ID_IES)
+Modelo_full_2018: NG ~ MOD + d_not + c_idade + d_sexf + d_etnia + dedicH + livros + d_ecivil + renda + d_afirm + d_bolsa + escpub + d_moraso + cat_adm + org_acad + regiao_curso + np_infra + np_me + np_dr + np_rt + idade_M + renda_IES + (1 | ID_IES)
+Modelo_full_RandomSlope_2018: NG ~ MOD + d_not + c_idade + d_sexf + d_etnia + dedicH + livros + d_ecivil + renda + d_afirm + d_bolsa + escpub + d_moraso + cat_adm + org_acad + regiao_curso + np_infra + np_me + np_dr + np_rt + idade_M + renda_IES + (MOD | ID_IES)
+Modelo_INTER_2018: NG ~ MOD + d_not + c_idade + d_sexf + d_etnia + dedicH + livros + d_ecivil + renda + d_afirm + d_bolsa + escpub + d_moraso + cat_adm + org_acad + regiao_curso + np_infra + np_me + np_dr + np_rt + idade_M + renda_IES + MOD * d_not + MOD * c_idade + MOD * d_etnia + MOD * renda_IES + (1 | ID_IES)
+Modelo_InterRandomSlope_2018: NG ~ MOD + d_not + c_idade + d_sexf + d_etnia + dedicH + livros + d_ecivil + renda + d_afirm + d_bolsa + escpub + d_moraso + cat_adm + org_acad + regiao_curso + np_infra + np_me + np_dr + np_rt + idade_M + renda_IES + MOD * d_not + MOD * c_idade + MOD * d_etnia + MOD * renda_IES + (MOD | ID_IES)
+                             npar    AIC    BIC
+Modelo_nulo_2018                3 408350 408377
+Modelo_MOD_2018                 4 408331 408367
+Modelo_2_2018                  15 408016 408150
+Modelo_1_2018                  27 405522 405762
+Modelo_1_Randomslope_2018      29 405291 405549
+Modelo_full_2018               39 405287 405632
+Modelo_full_RandomSlope_2018   41 405040 405404
+Modelo_INTER_2018              43 405092 405473
+Modelo_InterRandomSlope_2018   45 404911 405310
+                              logLik deviance
+Modelo_nulo_2018             -204172   408344
+Modelo_MOD_2018              -204162   408323
+Modelo_2_2018                -203993   407986
+Modelo_1_2018                -202734   405468
+Modelo_1_Randomslope_2018    -202617   405233
+Modelo_full_2018             -202604   405209
+Modelo_full_RandomSlope_2018 -202479   404958
+Modelo_INTER_2018            -202503   405006
+Modelo_InterRandomSlope_2018 -202410   404821
+                                Chisq Df Pr(>Chisq)
+Modelo_nulo_2018                                   
+Modelo_MOD_2018                21.299  1  3.929e-06
+Modelo_2_2018                 336.657 11  < 2.2e-16
+Modelo_1_2018                2518.414 12  < 2.2e-16
+Modelo_1_Randomslope_2018     234.647  2  < 2.2e-16
+Modelo_full_2018               24.907 10   0.005524
+Modelo_full_RandomSlope_2018  250.559  2  < 2.2e-16
+Modelo_INTER_2018               0.000  2   1.000000
+Modelo_InterRandomSlope_2018  184.741  2  < 2.2e-16
+                                
+Modelo_nulo_2018                
+Modelo_MOD_2018              ***
+Modelo_2_2018                ***
+Modelo_1_2018                ***
+Modelo_1_Randomslope_2018    ***
+Modelo_full_2018             ** 
+Modelo_full_RandomSlope_2018 ***
+Modelo_INTER_2018               
+Modelo_InterRandomSlope_2018 ***
+---
+Signif. codes:  
+0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1

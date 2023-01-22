@@ -1,0 +1,332 @@
+Linear mixed model fit by maximum likelihood .
+  t-tests use Satterthwaite's method [lmerModLmerTest
+]
+Formula: 
+NG ~ MOD + d_not + c_idade + d_sexf + d_etnia + dedicH + livros +  
+    d_ecivil + renda + d_afirm + d_bolsa + escpub + d_moraso +  
+    cat_adm + org_acad + regiao_curso + np_infra + np_me + np_dr +  
+    np_rt + idade_M + renda_IES + MOD * d_not + MOD * c_idade +  
+    MOD * d_etnia + MOD * renda_IES + (MOD | ID_IES)
+   Data: Dados_2015
+Control: lmerControl(optimizer = "Nelder_Mead")
+
+      AIC       BIC    logLik  deviance  df.resid 
+ 425970.1  426371.2 -212940.1  425880.1     54768 
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-3.9972 -0.6906 -0.0276  0.6666  4.3427 
+
+Random effects:
+ Groups   Name          Variance Std.Dev. Corr 
+ ID_IES   (Intercept)     5.421   2.328        
+          MODPresencial  13.770   3.711   -0.43
+ Residual               135.439  11.638        
+Number of obs: 54813, groups:  ID_IES, 817
+
+Fixed effects:
+                                         Estimate
+(Intercept)                             2.780e+01
+MODPresencial                           5.331e+00
+d_notNoturno                           -2.493e+00
+c_idade                                 5.617e-02
+d_sexfFeminino                         -2.623e+00
+d_etniaBranco ou amarelo                1.309e+00
+dedicH1h a 3h                           1.247e+00
+dedicH4h a 7h                           2.549e+00
+dedicH8h a 12h                          3.239e+00
+dedicHMais d 12h                        3.523e+00
+livrosUm ou dois                        4.621e-01
+livrosTrês a cinco                      8.775e-01
+livrosSeis a oito                       8.402e-01
+livrosMais de oito                      1.508e+00
+d_ecivilSolteiro                       -7.613e-01
+renda1,5 a 3 SM                         1.519e+00
+renda3 a 4,5 SM                         2.653e+00
+renda4,5 a 6 SM                         3.479e+00
+renda6 a 10 SM                          4.731e+00
+renda10 a 30 SM                         6.606e+00
+rendaMais de 30 SM                      7.412e+00
+d_afirmIngressou por PAA                5.258e-01
+d_bolsaBolsista                         2.211e+00
+escpubEM esc pública                   -1.094e+00
+d_morasoMora sozinho                    5.085e-01
+cat_admPública                          3.844e+00
+org_acadUniversidade                    1.208e+00
+regiao_cursoNordeste                    1.142e+00
+regiao_cursoSudeste                     1.724e+00
+regiao_cursoSul                         5.743e-01
+regiao_cursoCentro-oeste               -9.137e-01
+np_infra                                9.275e-01
+np_me                                   4.006e-01
+np_dr                                   4.313e-02
+np_rt                                   2.829e-01
+idade_M                                -2.286e-01
+renda_IES                               3.541e+00
+MODPresencial:d_notNoturno              1.312e+00
+MODPresencial:c_idade                  -1.579e-01
+MODPresencial:d_etniaBranco ou amarelo -8.733e-01
+MODPresencial:renda_IES                -1.337e+00
+                                       Std. Error
+(Intercept)                             3.554e+00
+MODPresencial                           2.868e+00
+d_notNoturno                            6.342e-01
+c_idade                                 1.338e-02
+d_sexfFeminino                          1.051e-01
+d_etniaBranco ou amarelo                2.192e-01
+dedicH1h a 3h                           2.016e-01
+dedicH4h a 7h                           2.179e-01
+dedicH8h a 12h                          2.675e-01
+dedicHMais d 12h                        2.902e-01
+livrosUm ou dois                        1.586e-01
+livrosTrês a cinco                      1.695e-01
+livrosSeis a oito                       2.285e-01
+livrosMais de oito                      2.210e-01
+d_ecivilSolteiro                        1.219e-01
+renda1,5 a 3 SM                         1.857e-01
+renda3 a 4,5 SM                         1.943e-01
+renda4,5 a 6 SM                         2.144e-01
+renda6 a 10 SM                          2.245e-01
+renda10 a 30 SM                         2.757e-01
+rendaMais de 30 SM                      6.218e-01
+d_afirmIngressou por PAA                1.348e-01
+d_bolsaBolsista                         1.272e-01
+escpubEM esc pública                    1.486e-01
+d_morasoMora sozinho                    2.017e-01
+cat_admPública                          5.430e-01
+org_acadUniversidade                    4.059e-01
+regiao_cursoNordeste                    5.914e-01
+regiao_cursoSudeste                     5.629e-01
+regiao_cursoSul                         6.107e-01
+regiao_cursoCentro-oeste                6.448e-01
+np_infra                                1.430e-01
+np_me                                   1.725e-01
+np_dr                                   1.709e-01
+np_rt                                   1.339e-01
+idade_M                                 5.916e-02
+renda_IES                               1.104e+00
+MODPresencial:d_notNoturno              6.857e-01
+MODPresencial:c_idade                   1.608e-02
+MODPresencial:d_etniaBranco ou amarelo  2.527e-01
+MODPresencial:renda_IES                 1.116e+00
+                                               df
+(Intercept)                             5.170e+01
+MODPresencial                           2.398e+01
+d_notNoturno                            5.776e+02
+c_idade                                 5.293e+04
+d_sexfFeminino                          5.450e+04
+d_etniaBranco ou amarelo                5.335e+04
+dedicH1h a 3h                           5.448e+04
+dedicH4h a 7h                           5.454e+04
+dedicH8h a 12h                          5.458e+04
+dedicHMais d 12h                        5.475e+04
+livrosUm ou dois                        5.439e+04
+livrosTrês a cinco                      5.454e+04
+livrosSeis a oito                       5.461e+04
+livrosMais de oito                      5.478e+04
+d_ecivilSolteiro                        5.445e+04
+renda1,5 a 3 SM                         5.443e+04
+renda3 a 4,5 SM                         5.447e+04
+renda4,5 a 6 SM                         5.443e+04
+renda6 a 10 SM                          5.432e+04
+renda10 a 30 SM                         5.427e+04
+rendaMais de 30 SM                      5.444e+04
+d_afirmIngressou por PAA                5.479e+04
+d_bolsaBolsista                         5.382e+04
+escpubEM esc pública                    5.477e+04
+d_morasoMora sozinho                    5.439e+04
+cat_admPública                          5.735e+02
+org_acadUniversidade                    4.290e+02
+regiao_cursoNordeste                    7.945e+02
+regiao_cursoSudeste                     8.381e+02
+regiao_cursoSul                         8.156e+02
+regiao_cursoCentro-oeste                8.599e+02
+np_infra                                8.041e+02
+np_me                                   7.743e+02
+np_dr                                   5.834e+02
+np_rt                                   8.043e+02
+idade_M                                 8.331e+02
+renda_IES                               2.110e+01
+MODPresencial:d_notNoturno              7.932e+02
+MODPresencial:c_idade                   5.288e+04
+MODPresencial:d_etniaBranco ou amarelo  5.334e+04
+MODPresencial:renda_IES                 2.231e+01
+                                       t value
+(Intercept)                              7.824
+MODPresencial                            1.859
+d_notNoturno                            -3.932
+c_idade                                  4.199
+d_sexfFeminino                         -24.961
+d_etniaBranco ou amarelo                 5.970
+dedicH1h a 3h                            6.185
+dedicH4h a 7h                           11.702
+dedicH8h a 12h                          12.110
+dedicHMais d 12h                        12.141
+livrosUm ou dois                         2.914
+livrosTrês a cinco                       5.178
+livrosSeis a oito                        3.678
+livrosMais de oito                       6.821
+d_ecivilSolteiro                        -6.247
+renda1,5 a 3 SM                          8.181
+renda3 a 4,5 SM                         13.650
+renda4,5 a 6 SM                         16.231
+renda6 a 10 SM                          21.077
+renda10 a 30 SM                         23.963
+rendaMais de 30 SM                      11.920
+d_afirmIngressou por PAA                 3.899
+d_bolsaBolsista                         17.387
+escpubEM esc pública                    -7.361
+d_morasoMora sozinho                     2.521
+cat_admPública                           7.080
+org_acadUniversidade                     2.975
+regiao_cursoNordeste                     1.931
+regiao_cursoSudeste                      3.064
+regiao_cursoSul                          0.940
+regiao_cursoCentro-oeste                -1.417
+np_infra                                 6.488
+np_me                                    2.322
+np_dr                                    0.252
+np_rt                                    2.113
+idade_M                                 -3.864
+renda_IES                                3.209
+MODPresencial:d_notNoturno               1.913
+MODPresencial:c_idade                   -9.821
+MODPresencial:d_etniaBranco ou amarelo  -3.456
+MODPresencial:renda_IES                 -1.197
+                                       Pr(>|t|)    
+(Intercept)                            2.51e-10 ***
+MODPresencial                          0.075323 .  
+d_notNoturno                           9.46e-05 ***
+c_idade                                2.68e-05 ***
+d_sexfFeminino                          < 2e-16 ***
+d_etniaBranco ou amarelo               2.39e-09 ***
+dedicH1h a 3h                          6.26e-10 ***
+dedicH4h a 7h                           < 2e-16 ***
+dedicH8h a 12h                          < 2e-16 ***
+dedicHMais d 12h                        < 2e-16 ***
+livrosUm ou dois                       0.003572 ** 
+livrosTrês a cinco                     2.25e-07 ***
+livrosSeis a oito                      0.000236 ***
+livrosMais de oito                     9.11e-12 ***
+d_ecivilSolteiro                       4.20e-10 ***
+renda1,5 a 3 SM                        2.88e-16 ***
+renda3 a 4,5 SM                         < 2e-16 ***
+renda4,5 a 6 SM                         < 2e-16 ***
+renda6 a 10 SM                          < 2e-16 ***
+renda10 a 30 SM                         < 2e-16 ***
+rendaMais de 30 SM                      < 2e-16 ***
+d_afirmIngressou por PAA               9.65e-05 ***
+d_bolsaBolsista                         < 2e-16 ***
+escpubEM esc pública                   1.85e-13 ***
+d_morasoMora sozinho                   0.011704 *  
+cat_admPública                         4.24e-12 ***
+org_acadUniversidade                   0.003093 ** 
+regiao_cursoNordeste                   0.053850 .  
+regiao_cursoSudeste                    0.002257 ** 
+regiao_cursoSul                        0.347298    
+regiao_cursoCentro-oeste               0.156843    
+np_infra                               1.52e-10 ***
+np_me                                  0.020469 *  
+np_dr                                  0.800813    
+np_rt                                  0.034928 *  
+idade_M                                0.000120 ***
+renda_IES                              0.004196 ** 
+MODPresencial:d_notNoturno             0.056117 .  
+MODPresencial:c_idade                   < 2e-16 ***
+MODPresencial:d_etniaBranco ou amarelo 0.000549 ***
+MODPresencial:renda_IES                0.243762    
+---
+Signif. codes:  
+0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+                                             2.5 %
+.sig01                                  1.54854317
+.sig02                                 -0.73911445
+.sig03                                  2.75636145
+.sigma                                 11.56875127
+(Intercept)                            20.73664194
+MODPresencial                          -0.54933737
+d_notNoturno                           -3.74644058
+c_idade                                 0.02995039
+d_sexfFeminino                         -2.82913251
+d_etniaBranco ou amarelo                0.87905624
+dedicH1h a 3h                           0.85159338
+dedicH4h a 7h                           2.12241657
+dedicH8h a 12h                          2.71497918
+dedicHMais d 12h                        2.95424334
+livrosUm ou dois                        0.15124950
+livrosTrês a cinco                      0.54534855
+livrosSeis a oito                       0.39238329
+livrosMais de oito                      1.07449901
+d_ecivilSolteiro                       -1.00020549
+renda1,5 a 3 SM                         1.15514759
+renda3 a 4,5 SM                         2.27183716
+renda4,5 a 6 SM                         3.05908121
+renda6 a 10 SM                          4.29138644
+renda10 a 30 SM                         6.06578871
+rendaMais de 30 SM                      6.19335594
+d_afirmIngressou por PAA                0.26145361
+d_bolsaBolsista                         1.96213475
+escpubEM esc pública                   -1.38513440
+d_morasoMora sozinho                    0.11315978
+cat_admPública                          2.76269825
+org_acadUniversidade                    0.40832985
+regiao_cursoNordeste                   -0.01843471
+regiao_cursoSudeste                     0.61870438
+regiao_cursoSul                        -0.62566039
+regiao_cursoCentro-oeste               -2.17914491
+np_infra                                0.64706566
+np_me                                   0.06155986
+np_dr                                  -0.29310158
+np_rt                                   0.01983901
+idade_M                                -0.34496294
+renda_IES                               1.26419030
+MODPresencial:d_notNoturno             -0.03780252
+MODPresencial:c_idade                  -0.18941693
+MODPresencial:d_etniaBranco ou amarelo -1.36861220
+MODPresencial:renda_IES                -3.61677681
+                                            97.5 %
+.sig01                                  3.44812118
+.sig02                                 -0.04077204
+.sig03                                  4.93545645
+.sigma                                 11.70762272
+(Intercept)                            34.94156272
+MODPresencial                          11.16492967
+d_notNoturno                           -1.24240916
+c_idade                                 0.08239048
+d_sexfFeminino                         -2.41717035
+d_etniaBranco ou amarelo                1.73854691
+dedicH1h a 3h                           1.64177397
+dedicH4h a 7h                           2.97651390
+dedicH8h a 12h                          3.76361504
+dedicHMais d 12h                        4.09184703
+livrosUm ou dois                        0.77287075
+livrosTrês a cinco                      1.20965491
+livrosSeis a oito                       1.28804912
+livrosMais de oito                      1.94107440
+d_ecivilSolteiro                       -0.52246698
+renda1,5 a 3 SM                         1.88309568
+renda3 a 4,5 SM                         3.03368361
+renda4,5 a 6 SM                         3.89940436
+renda6 a 10 SM                          5.17142824
+renda10 a 30 SM                         7.14661113
+rendaMais de 30 SM                      8.63143699
+d_afirmIngressou por PAA                0.79015673
+d_bolsaBolsista                         2.46079012
+escpubEM esc pública                   -0.80246944
+d_morasoMora sozinho                    0.90392432
+cat_admPública                          4.92689348
+org_acadUniversidade                    2.00900582
+regiao_cursoNordeste                    2.30254053
+regiao_cursoSudeste                     2.82905239
+regiao_cursoSul                         1.77231354
+regiao_cursoCentro-oeste                0.35162122
+np_infra                                1.20823798
+np_me                                   0.73993723
+np_dr                                   0.38030025
+np_rt                                   0.54561252
+idade_M                                -0.11232980
+renda_IES                               5.79989268
+MODPresencial:d_notNoturno              2.66355815
+MODPresencial:c_idade                  -0.12638451
+MODPresencial:d_etniaBranco ou amarelo -0.37797590
+MODPresencial:renda_IES                 0.96241313

@@ -1,0 +1,54 @@
+Data: Dados_2015
+Models:
+Modelo_nulo_2015: NG ~ 1 + (1 | ID_IES)
+Modelo_MOD_2015: NG ~ MOD + (1 | ID_IES)
+Modelo_2_2015: NG ~ cat_adm + org_acad + regiao_curso + np_infra + np_me + np_dr + np_rt + idade_M + renda_IES + (1 | ID_IES)
+Modelo_1_2015: NG ~ MOD + d_not + c_idade + d_sexf + d_etnia + dedicH + livros + d_ecivil + renda + d_afirm + d_bolsa + escpub + d_moraso + (1 | ID_IES)
+Modelo_1_Randomslope_2015: NG ~ MOD + d_not + c_idade + d_sexf + d_etnia + dedicH + livros + d_ecivil + renda + d_afirm + d_bolsa + escpub + d_moraso + (MOD | ID_IES)
+Modelo_full_2015: NG ~ MOD + d_not + c_idade + d_sexf + d_etnia + dedicH + livros + d_ecivil + renda + d_afirm + d_bolsa + escpub + d_moraso + cat_adm + org_acad + regiao_curso + np_infra + np_me + np_dr + np_rt + idade_M + renda_IES + (1 | ID_IES)
+Modelo_full_RandomSlope_2015: NG ~ MOD + d_not + c_idade + d_sexf + d_etnia + dedicH + livros + d_ecivil + renda + d_afirm + d_bolsa + escpub + d_moraso + cat_adm + org_acad + regiao_curso + np_infra + np_me + np_dr + np_rt + idade_M + renda_IES + (MOD | ID_IES)
+Modelo_INTER_2015: NG ~ MOD + d_not + c_idade + d_sexf + d_etnia + dedicH + livros + d_ecivil + renda + d_afirm + d_bolsa + escpub + d_moraso + cat_adm + org_acad + regiao_curso + np_infra + np_me + np_dr + np_rt + idade_M + renda_IES + MOD * d_not + MOD * c_idade + MOD * d_etnia + MOD * renda_IES + (1 | ID_IES)
+Modelo_InterRandomSlope_2015: NG ~ MOD + d_not + c_idade + d_sexf + d_etnia + dedicH + livros + d_ecivil + renda + d_afirm + d_bolsa + escpub + d_moraso + cat_adm + org_acad + regiao_curso + np_infra + np_me + np_dr + np_rt + idade_M + renda_IES + MOD * d_not + MOD * c_idade + MOD * d_etnia + MOD * renda_IES + (MOD | ID_IES)
+                             npar    AIC    BIC
+Modelo_nulo_2015                3 429421 429448
+Modelo_MOD_2015                 4 429301 429336
+Modelo_2_2015                  15 429035 429168
+Modelo_1_2015                  27 426528 426769
+Modelo_1_Randomslope_2015      29 426392 426650
+Modelo_full_2015               39 426224 426572
+Modelo_full_RandomSlope_2015   41 426076 426442
+Modelo_INTER_2015              43 426103 426486
+Modelo_InterRandomSlope_2015   45 425970 426371
+                              logLik deviance
+Modelo_nulo_2015             -214708   429415
+Modelo_MOD_2015              -214646   429293
+Modelo_2_2015                -214502   429005
+Modelo_1_2015                -213237   426474
+Modelo_1_Randomslope_2015    -213167   426334
+Modelo_full_2015             -213073   426146
+Modelo_full_RandomSlope_2015 -212997   425994
+Modelo_INTER_2015            -213008   426017
+Modelo_InterRandomSlope_2015 -212940   425880
+                               Chisq Df Pr(>Chisq)
+Modelo_nulo_2015                                  
+Modelo_MOD_2015               122.50  1     <2e-16
+Modelo_2_2015                 288.11 11     <2e-16
+Modelo_1_2015                2530.61 12     <2e-16
+Modelo_1_Randomslope_2015     140.63  2     <2e-16
+Modelo_full_2015              187.11 10     <2e-16
+Modelo_full_RandomSlope_2015  152.04  2     <2e-16
+Modelo_INTER_2015               0.00  2          1
+Modelo_InterRandomSlope_2015  136.56  2     <2e-16
+                                
+Modelo_nulo_2015                
+Modelo_MOD_2015              ***
+Modelo_2_2015                ***
+Modelo_1_2015                ***
+Modelo_1_Randomslope_2015    ***
+Modelo_full_2015             ***
+Modelo_full_RandomSlope_2015 ***
+Modelo_INTER_2015               
+Modelo_InterRandomSlope_2015 ***
+---
+Signif. codes:  
+0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
